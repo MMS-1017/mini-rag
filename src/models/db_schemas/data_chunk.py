@@ -8,6 +8,7 @@ class DataChunk(BaseModel):
     chunk_meta: dict
     chunk_order: int = Field(..., gt=0) # chunk_order should be a non-negative integer
     chunk_project_id: ObjectId
+    chunk_asset_id: ObjectId # File related to the chunks (_id)
 
     class Config:
         arbitrary_types_allowed = True

@@ -20,6 +20,9 @@ class ProcessController(BaseController):
         
         file_ext = self.get_file_extension(file_id=file_id)
         file_path = os.path.join(self.project_path, file_id)
+        
+        if os.path.exists(file_path) == False:
+            return None
 
         if file_ext==ProcessingEnum.PDF.value:
             return PyMuPDFLoader(file_path=file_path)
@@ -31,6 +34,8 @@ class ProcessController(BaseController):
     
     def get_file_content(self, file_id: str):
         loader = self.get_file_loader(file_id=file_id)
+        if loader is None:
+            return None
         return loader.load()
     
     def process_file_content(self, file_content: list, file_id: str, 

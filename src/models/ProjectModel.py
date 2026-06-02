@@ -27,10 +27,9 @@ class ProjectModel(BaseDataModel):
                     unique=index['unique']
                 )
 
-    
     async def create_project(self, project: Project):
         result = await self.collection.insert_one(project.dict(by_alias=True, exclude_unset=True))
-        project._id = result.inserted_id
+        project.id = result.inserted_id
         return project
     
     async def get_project_or_create_one(self, project_id: str):
@@ -48,7 +47,9 @@ class ProjectModel(BaseDataModel):
     async def get_all_projects(self, page: int = 1, page_size: int = 10):
         
         # Count total number of documents
-        total_docs = await self.collection.count_documents({})
+        total_docs = await self.collection.count_documents(
+            {} # do not use any filters
+            )
         
         total_pages = total_docs // page_size
         if total_docs % page_size > 0:

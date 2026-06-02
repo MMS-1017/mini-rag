@@ -29,8 +29,8 @@ class ChunkModel(BaseDataModel):
 
     async def create_chunk(self, chunk: DataChunk):
         result = await self.collection.insert_one( # insert_one here is the process itself
-            chunk.dict(by_alias=True, 
-                       exclude_unset=True)
+            chunk.dict(by_alias=True, # return _id not id
+                       exclude_unset=True) # Do not add the fields that were not specified -> cleaner, less document space
             ) 
         chunk._id = result.inserted_id
         return chunk
@@ -47,7 +47,8 @@ class ChunkModel(BaseDataModel):
     async def insert_many_chunks(self, chunks: list, batch_size: int = 100): # we use batch because even 100000 is a load for bulk writing
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i:i + batch_size]
-            operations = [InsertOne(chunk.dict(by_alias=True, exclude_unset=True)) for chunk in batch]
+            operations = [InsertOne(chunk.dict(by_alias=True, exclude_unset=True)) 
+                          for chunk in batch]
             await self.collection.bulk_write(operations)
         
         return len(chunks)
