@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     MONGODB_URL: str
     MONGODB_DB_NAME: str
 
-    class Config:
-        env_file = ".env"
+    class Config: 
+        env_file = ".env" # Convert env file to a class 
 
 def get_settings():
     return Settings()

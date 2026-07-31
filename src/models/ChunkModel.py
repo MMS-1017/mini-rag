@@ -10,7 +10,7 @@ class ChunkModel(BaseDataModel):
         self.collection = self.db_client[DBEnum.COLLECTION_CHUNK_NAME.value]
     
     @classmethod
-    async def create_instance(cls, db_client: object): # imporatant function
+    async def create_instance(cls, db_client: object): # important function
         instance = cls(db_client) # call the constructor
         await instance.init_collection() # cannot call init_collection in constructor because it is async function
         return instance
