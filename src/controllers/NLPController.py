@@ -6,12 +6,13 @@ import json
 
 class NLPController(BaseController):
 
-    def __init__(self, vectordb_client, generation_client, embedding_client):
+    def __init__(self, vectordb_client, generation_client, embedding_client, template_parser):
         super().__init__()
 
         self.vectordb_client = vectordb_client
         self.generation_client = generation_client
         self.embedding_client = embedding_client
+        self.template_parser = template_parser
     
     def create_collection_name(self, project_id: str): # each vector store has it own naming conventions
         return f"project_{project_id}_collection"
@@ -73,21 +74,69 @@ class NLPController(BaseController):
         vector = self.embedding_client.embed_text(text=text, 
                                                   document_type=DocumentTypeEnum.QUERY.value)
 
-        if vector is None:
-            return None
+        if vector is None or len(vector)==0:
+            return False
 
+        # step3: do semantic search
         results = self.vectordb_client.search_by_vector(
             collection_name=collection_name,
             vector=vector,
             limit=limit
         )
 
-        return [
-            {
-                "id": result.id,
-                "score": result.score,
-                "text": result.payload.get("text") if result.payload else None,
-                "metadata": result.payload.get("metadata") if result.payload else None
-            }
-            for result in results
+        if not results:
+            return False
+
+        return results
+
+    def answer_rag_questions(self, project: Project, query: str, limit: int = 10):
+
+        answer, full_prompt, chat_history = None, None, None
+        # step1: retrieve related documents
+        retrieved_documents = self.search_vector_db_collection(
+            project=project,
+            text=query,
+            limit=limit
+        )
+
+        if not retrieved_documents or len(retrieved_documents)==0:
+            return answer, full_prompt, chat_history
+
+        # step2: construct LLM prompt
+        system_prompt = self.template_parser.get("rag", "system_prompt")
+
+        # documents_prompts = []
+        # for idx, doc in enumerate(retrieved_documents):
+        #     documents_prompts.append(
+        #         self.template_parser.get("rag", "system_prompt",{
+        #             "doc_num": idx+1
+        #             "chunk_text": doc.text
+        #         })
+        #     ) 
+        # Better way is using list comprehension (faster in production)    
+        
+        documents_prompts = "\n".join([
+            self.template_parser.get("rag", "system_prompt",{
+                    "doc_num": idx+1
+                    "chunk_text": doc.text
+                })
+            for idx, doc in enumerate(retrieved_documents)
+        ])
+
+        footer_prompt = self.template_parser.get("rag","footer_prompt")
+
+        chat_history = [
+            self.generation_client.construct_prompt(
+                prompt = system_prompt,
+                role = self.generation_client.enums.SYSTEM.value
+            )
         ]
+
+        full_prompt = "\n\n".join([documents_prompts, footer_prompt])
+
+        answer = self.generation_client.generate_text(
+            prompt = full_prompt,
+            chat_history = chat_history
+        )
+
+        return answer, full_prompt, chat_history

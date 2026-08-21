@@ -22,3 +22,8 @@ class DataChunk(BaseModel):
                 "unique":False
             }
         ]
+
+class RetrievedDocument(BaseException):
+    text: str
+    score: float
+    
