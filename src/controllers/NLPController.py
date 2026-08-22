@@ -105,16 +105,6 @@ class NLPController(BaseController):
         # step2: construct LLM prompt
         system_prompt = self.template_parser.get("rag", "system_prompt")
 
-        # documents_prompts = []
-        # for idx, doc in enumerate(retrieved_documents):
-        #     documents_prompts.append(
-        #         self.template_parser.get("rag", "system_prompt",{
-        #             "doc_num": idx+1
-        #             "chunk_text": doc.text
-        #         })
-        #     ) 
-        # Better way is using list comprehension (faster in production)    
-        
         documents_prompts = "\n".join([
             self.template_parser.get("rag", "system_prompt",{
                     "doc_num": idx+1
@@ -123,8 +113,11 @@ class NLPController(BaseController):
             for idx, doc in enumerate(retrieved_documents)
         ])
 
-        footer_prompt = self.template_parser.get("rag","footer_prompt")
+        footer_prompt = self.template_parser.get("rag","footer_prompt",{
+            "query":query
+        })
 
+        # step3: construct generation client prompts
         chat_history = [
             self.generation_client.construct_prompt(
                 prompt = system_prompt,

@@ -20,11 +20,15 @@ document_prompt = Template(
     "\n".join([
         "## المستند رقم: $doc_num",
         "### المحتوى: $chunk_text",
+
     ])
 )
 
 #### Footer ####
 footer_prompt = Template("\n".join([
     "بناءً فقط على المستندات المذكورة أعلاه، يرجى توليد إجابة للمستخدم.",
+    "##السؤال:",
+    "$query",
+    "",
     "## الإجابة:",
 ]))
