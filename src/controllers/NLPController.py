@@ -114,7 +114,7 @@ class NLPController(BaseController):
         ])
 
         footer_prompt = self.template_parser.get("rag","footer_prompt",{
-            "query":query
+            "query":quer
         })
 
         # step3: construct generation client prompts
